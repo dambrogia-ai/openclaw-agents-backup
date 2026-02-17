@@ -15,7 +15,7 @@ async function main(): Promise<void> {
   const configPath = path.join(workspace, '.backupconfig.json');
 
   if (!fs.existsSync(configPath)) {
-    console.error(`❌ Error: .backupconfig.json not found at ${configPath}`);
+    console.error('❌ Error: .backupconfig.json not found at ' + configPath);
     process.exit(1);
   }
 
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
         break;
 
       default:
-        console.error(`❌ Unknown command: ${command}`);
+        console.error('❌ Unknown command: ' + command);
         showHelp();
         process.exit(1);
     }
@@ -58,7 +58,7 @@ async function handleBackup(workspace: string): Promise<void> {
   const result = await performBackup(workspace);
 
   if (result.success) {
-    console.log(`✅ Backup complete`);
+    console.log('✅ Backup complete');
     console.log(`   Agents processed: ${result.agentsProcessed}`);
     console.log(
       `   Changes: ${result.changes.filter((c) => c.workspaceChanged || c.agentDirChanged).length}`
@@ -96,7 +96,7 @@ async function handleRestore(
   const result = await performRestore(backupRepoPath, targetSha, workspace);
 
   if (result.success) {
-    console.log(`✅ Restore complete`);
+    console.log('✅ Restore complete');
     console.log(`   Agents restored: ${result.agentsRestored}`);
   } else {
     console.error(`❌ Restore failed: ${result.message}`);

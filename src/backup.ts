@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { AgentBinding, BackupConfig, BackupResult, BackupChange, AgentArchiveMetadata } from './types';
+import { BackupConfig, BackupResult, BackupChange, AgentArchiveMetadata } from './types';
 import {
   pathExists,
   rsyncDirectory,

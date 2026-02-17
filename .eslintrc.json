@@ -1,12 +1,13 @@
 {
   "parser": "@typescript-eslint/parser",
   "extends": ["plugin:@typescript-eslint/recommended"],
+  "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module"
   },
   "rules": {
-    "@typescript-eslint/explicit-function-return-types": "warn",
+    "@typescript-eslint/explicit-function-return-types": "off",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": [
       "error",
@@ -15,8 +16,9 @@
         "varsIgnorePattern": "^_"
       }
     ],
+    "@typescript-eslint/no-var-requires": "off",
     "semi": ["error", "always"],
     "quotes": ["error", "single", { "avoidEscape": true }],
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": ["warn", { "allow": ["log", "warn", "error"] }]
   }
 }

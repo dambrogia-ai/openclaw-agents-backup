@@ -12,7 +12,7 @@ import { pathExists, rsyncDirectory, readJsonFile, ensureDirectoryExists } from 
 export async function performRestore(
   backupRepoPath: string,
   targetSha: string | null,
-  workspacePath: string
+  _workspacePath: string
 ): Promise<RestoreResult> {
   try {
     if (!pathExists(backupRepoPath)) {

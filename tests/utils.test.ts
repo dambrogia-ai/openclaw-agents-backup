@@ -1,6 +1,5 @@
 import { getCurrentTimestamp, pathExists, ensureDirectoryExists } from '../src/utils';
 import * as fs from 'fs';
-import * as path from 'path';
 
 describe('Utils', () => {
   describe('getCurrentTimestamp', () => {
