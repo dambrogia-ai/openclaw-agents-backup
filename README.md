@@ -233,7 +233,9 @@ Each backup cycle syncs full agent workspaces and agent directories. Disk usage:
 
 **Note:** If agents have cloned git repos in their workspace, those don't inflate Git (stored in `archives/` only, not committed to backup Git). Backup repo itself grows only by actual edits to memory, config, and metadata files — typically small daily changes.
 
-Recommendation: For typical setups, monthly growth is 10-50MB. No special storage needed.
+Recommendation: For typical setups, monthly growth is 10-50MB. A 35GB disk is more than sufficient for years of backups.
+
+**⚠️ Warning:** If agents accidentally save large files (binaries, datasets, etc.) to their workspace, Git history will grow quickly. Use `.gitignore` in agent workspaces to prevent committing large artifacts.
 
 ## Limitations
 
@@ -241,6 +243,7 @@ Recommendation: For typical setups, monthly growth is 10-50MB. No special storag
 - **No encryption** — Backup repo should be private and secure
 - **No compression** — Backups stored as full directory syncs in Git
 - **Single backup location** — Multi-region replication not supported
+- **Large files bloat Git** — If agents accidentally save large files (binaries, datasets, etc.) to workspace, Git history will balloon. Recommend using `.gitignore` in agent workspaces to prevent this
 
 ## Troubleshooting
 
