@@ -216,16 +216,24 @@ Check that files were committed in Git.
 
 Each backup cycle syncs full agent workspaces and agent directories. Disk usage:
 
-- **Per agent** — Size of `workspace/` + `agentDir/` directories
-- **Total** — All agent directories duplicated in `archives/`
-- **Git** — Only tracks changed files (size grows incrementally)
+- **`archives/` directory** — Full copy of workspace + agentDir per agent (updated hourly, size stays constant)
+- **Git repository** — Only changed files are committed; grows incrementally with actual changes
 
-Example:
-- 1 agent with 100MB workspace → ~100MB per backup
-- 3 agents with 100MB each → ~300MB per backup
-- Hourly backups = 7.2GB/day, ~200GB/month
+### Realistic Example
 
-Recommendation: Use a dedicated backup VPS or cloud storage for long-term retention.
+**1 agent with 100MB workspace:**
+- `archives/main/workspace/` — 100MB (constant, updated each sync)
+- Git growth — 500KB-1MB per day (memory files + config changes) = ~15MB/month
+- Total after 30 days — ~115MB
+
+**3 agents with 100MB each:**
+- `archives/` total — ~300MB (constant)
+- Git growth — ~45MB/month (3 agents × 15MB/month)
+- Total after 30 days — ~345MB
+
+**Note:** If agents have cloned git repos in their workspace, those don't inflate Git (stored in `archives/` only, not committed to backup Git). Backup repo itself grows only by actual edits to memory, config, and metadata files — typically small daily changes.
+
+Recommendation: For typical setups, monthly growth is 10-50MB. No special storage needed.
 
 ## Limitations
 
