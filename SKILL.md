@@ -23,6 +23,39 @@ npm install @dambrogia/openclaw-agents-backup
 
 Or clone from GitHub and use as a local dependency.
 
+## Usage Patterns
+
+### For End Users: Agent-Driven Backups
+
+The simplest approach: tell your agent what you need.
+
+**Setup once:**
+1. Agent installs the skill: `npm install @dambrogia/openclaw-agents-backup`
+2. Agent adds backup/restore functions (see agent integration example below)
+3. User talks naturally: "Back up my agents", "Restore to yesterday"
+
+**Example agent code:**
+```typescript
+import { performBackup, performRestore } from '@dambrogia/openclaw-agents-backup';
+
+// Agent can call these
+async function backupAllAgents() {
+  const result = await performBackup(process.env.OPENCLAW_WORKSPACE);
+  console.log(result.message);
+}
+
+async function restoreAllAgents(sha?: string) {
+  const workspace = process.env.OPENCLAW_WORKSPACE;
+  const config = require('fs').readFileSync(`${workspace}/.backupconfig.json`, 'utf8');
+  const result = await performRestore(JSON.parse(config).backupRepoPath, sha, workspace);
+  console.log(result.message);
+}
+```
+
+### For Developers: Direct Library Use
+
+Install as a dependency and call functions directly in your code.
+
 ## Setup
 
 ### 1. Create Backup Repository
