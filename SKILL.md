@@ -27,30 +27,25 @@ Or clone from GitHub and use as a local dependency.
 
 ### For End Users: Agent-Driven Backups
 
-The simplest approach: tell your agent what you need.
+Install the package once. Agent calls CLI commands. User tells agent what they need.
 
-**Setup once:**
-1. Agent installs the skill: `npm install @dambrogia/openclaw-agents-backup`
-2. Agent adds backup/restore functions (see agent integration example below)
-3. User talks naturally: "Back up my agents", "Restore to yesterday"
-
-**Example agent code:**
-```typescript
-import { performBackup, performRestore } from '@dambrogia/openclaw-agents-backup';
-
-// Agent can call these
-async function backupAllAgents() {
-  const result = await performBackup(process.env.OPENCLAW_WORKSPACE);
-  console.log(result.message);
-}
-
-async function restoreAllAgents(sha?: string) {
-  const workspace = process.env.OPENCLAW_WORKSPACE;
-  const config = require('fs').readFileSync(`${workspace}/.backupconfig.json`, 'utf8');
-  const result = await performRestore(JSON.parse(config).backupRepoPath, sha, workspace);
-  console.log(result.message);
-}
+**Setup:**
+```bash
+npm install @dambrogia/openclaw-agents-backup
 ```
+
+**Agent calls:**
+```bash
+backup-agents backup              # Back up now
+backup-agents restore             # Restore latest
+backup-agents restore --sha ABC123 # Point-in-time
+backup-agents history             # Show log
+```
+
+**User interaction:**
+- "Back up my agents" → Agent runs `backup-agents backup`
+- "Restore my agents" → Agent runs `backup-agents restore`
+- "Show backup history" → Agent runs `backup-agents history`
 
 ### For Developers: Direct Library Use
 
@@ -105,7 +100,20 @@ cron.add({
 
 Or use OpenClaw's built-in scheduling to call the backup function.
 
-## API
+## CLI
+
+### Commands
+
+```bash
+backup-agents backup              # Back up all agents now
+backup-agents restore             # Restore to latest
+backup-agents restore --sha SHA   # Restore to specific commit
+backup-agents history             # Show recent backups
+```
+
+## API (Library Reference)
+
+For developers using the library directly (not required for typical CLI usage).
 
 ### Backup
 

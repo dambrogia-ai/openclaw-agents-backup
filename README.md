@@ -14,7 +14,7 @@ This skill automates hourly backups of all agent workspaces and agent directorie
 
 ## Agent Integration
 
-The easiest way to use this skill is to let your agent handle backups and restores through simple prompts.
+The easiest way to use this skill is to install it and let your agent call the CLI commands.
 
 ### Setup (One-time)
 
@@ -23,73 +23,46 @@ The easiest way to use this skill is to let your agent handle backups and restor
 npm install @dambrogia/openclaw-agents-backup
 ```
 
-2. **Add backup/restore handlers to your agent:**
-```typescript
-// In your agent's main code
-import { performBackup, performRestore } from '@dambrogia/openclaw-agents-backup';
-
-async function backupAllAgents(): Promise<void> {
-  const workspace = process.env.OPENCLAW_WORKSPACE || '/root/.openclaw/workspace';
-  const result = await performBackup(workspace);
-  
-  if (result.success) {
-    console.log(`✓ Backup complete: ${result.message}`);
-  } else {
-    console.error(`✗ Backup failed: ${result.error}`);
-  }
-}
-
-async function restoreAllAgents(targetSha?: string): Promise<void> {
-  const workspace = process.env.OPENCLAW_WORKSPACE || '/root/.openclaw/workspace';
-  const configPath = `${workspace}/.backupconfig.json`;
-  const config = JSON.parse(require('fs').readFileSync(configPath, 'utf8'));
-  
-  const result = await performRestore(config.backupRepoPath, targetSha || null, workspace);
-  
-  if (result.success) {
-    console.log(`✓ Restore complete: ${result.message}`);
-  } else {
-    console.error(`✗ Restore failed: ${result.error}`);
-  }
-}
-
-// Export for agent to call
-export { backupAllAgents, restoreAllAgents };
-```
+That's it. You're done.
 
 ### Usage
 
-Then just tell your agent:
+Your agent can now run:
 
-- **"Back up my agents"** → Agent calls `backupAllAgents()`
-- **"Restore my agents"** → Agent calls `restoreAllAgents()`
-- **"Restore agents to commit abc123"** → Agent calls `restoreAllAgents('abc123')`
-- **"Show me backup history"** → Agent runs `git log` in the backup repo
+```bash
+backup-agents backup              # Back up all agents now
+backup-agents restore             # Restore to latest backup
+backup-agents restore --sha abc123 # Restore to specific point in time
+backup-agents history             # Show recent backups
+```
 
-The agent handles the technical details; you just chat naturally.
+Just tell your agent what you need:
+
+- **"Back up my agents"** → Agent runs `backup-agents backup`
+- **"Restore my agents"** → Agent runs `backup-agents restore`
+- **"Restore agents to yesterday"** → Agent runs `backup-agents restore --sha <commit>`
+- **"Show me backup history"** → Agent runs `backup-agents history`
 
 ### Scheduled Backups
 
 For automated hourly backups, set up a cron job in your OpenClaw instance:
 
 ```javascript
-const { performBackup } = require('@dambrogia/openclaw-agents-backup');
-
 // Runs every hour at :00
 cron.add({
   name: 'agents-backup-hourly',
   schedule: { kind: 'cron', expr: '0 * * * *' },
   payload: {
     kind: 'agentTurn',
-    message: 'Back up all agents silently',
+    message: 'Back up all agents: backup-agents backup',
     timeoutSeconds: 300
   },
   sessionTarget: 'isolated',
-  notify: false // No notification unless error
+  notify: false
 });
 ```
 
-Or tell your agent to set this up: **"Schedule hourly backups of my agents"**
+Or just tell your agent: **"Schedule hourly backups of my agents"**
 
 ---
 

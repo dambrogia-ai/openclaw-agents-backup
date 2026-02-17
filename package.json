@@ -4,6 +4,9 @@
   "description": "Backup and restore OpenClaw agent workspaces across multi-agent setups",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "backup-agents": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint src tests --ext .ts",
