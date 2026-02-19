@@ -7,9 +7,11 @@ import {
   writeJsonFile,
   ensureDirectoryExists,
   executeCommand,
-  getCurrentTimestamp
+  getCurrentTimestamp,
+  findAllFiles
 } from './utils';
 import { listAgents, validateAgentBinding } from './agentLister';
+import { encryptFile } from './encryptionService';
 
 /**
  * Perform backup of all agents to the configured backup repository
@@ -38,6 +40,18 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
         agentsProcessed: 0,
         changes: [],
         error: 'Backup repo not initialized'
+      };
+    }
+
+    // Get encryption password from environment
+    const encryptionPassword = process.env.BACKUP_ENCRYPTION_PASSWORD;
+    if (!encryptionPassword) {
+      return {
+        success: false,
+        message: 'Backup encryption password not set',
+        agentsProcessed: 0,
+        changes: [],
+        error: 'Missing BACKUP_ENCRYPTION_PASSWORD environment variable'
       };
     }
 
@@ -90,10 +104,31 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
         ensureDirectoryExists(workspaceDestination);
         backupChange.workspaceChanged = rsyncDirectory(agent.workspace, workspaceDestination);
 
-        // Sync agent directory
+        // Sync agent directory (includes both agent/ and sessions/ directories)
+        // Source: ${agentDir}/.. to capture agent/ and sessions/ together
+        const agentDirParent = path.join(agent.agentDir, '..');
         const agentDirDestination = path.join(agentArchivePath, 'agentDir');
         ensureDirectoryExists(agentDirDestination);
-        backupChange.agentDirChanged = rsyncDirectory(agent.agentDir, agentDirDestination);
+        backupChange.agentDirChanged = rsyncDirectory(agentDirParent, agentDirDestination);
+
+        // Encrypt all files in agentDir backup
+        const allFiles = findAllFiles(agentDirDestination);
+        for (const file of allFiles) {
+          // Skip already encrypted files
+          if (file.endsWith('.enc')) {
+            continue;
+          }
+
+          try {
+            const encryptedPath = `${file}.enc`;
+            encryptFile(file, encryptedPath, encryptionPassword);
+            // Delete plaintext after successful encryption
+            fs.unlinkSync(file);
+          } catch (error) {
+            backupChange.error = `Failed to encrypt ${file}: ${error}`;
+            throw error;
+          }
+        }
 
         changes.push(backupChange);
       } catch (error) {
