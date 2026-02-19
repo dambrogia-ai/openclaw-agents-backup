@@ -102,22 +102,17 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
       }
     }
 
-    // Check if any changes were made
-    const hasChanges = changes.some((c) => c.workspaceChanged || c.agentDirChanged);
-
-    // Commit to git if there are changes
-    if (hasChanges) {
-      try {
-        await gitCommitBackup(backupRepoPath);
-      } catch (error) {
-        return {
-          success: false,
-          message: 'Backup completed but git commit failed',
-          agentsProcessed: validAgents.length,
-          changes,
-          error: String(error)
-        };
-      }
+    // Always commit since metadata (backedUpAt) is always updated
+    try {
+      await gitCommitBackup(backupRepoPath);
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Backup completed but git commit failed',
+        agentsProcessed: validAgents.length,
+        changes,
+        error: String(error)
+      };
     }
 
     return {
