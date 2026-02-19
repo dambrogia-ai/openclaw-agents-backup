@@ -140,3 +140,31 @@ export function findEncryptedFiles(dirPath: string): string[] {
   walk(dirPath);
   return results;
 }
+
+/**
+ * Recursively find all files in a directory (no filters)
+ */
+export function findAllFiles(dirPath: string): string[] {
+  const results: string[] = [];
+
+  function walk(currentPath: string): void {
+    if (!fs.existsSync(currentPath)) {
+      return;
+    }
+
+    const items = fs.readdirSync(currentPath, { withFileTypes: true });
+
+    for (const item of items) {
+      const fullPath = path.join(currentPath, item.name);
+
+      if (item.isDirectory()) {
+        walk(fullPath);
+      } else if (item.isFile()) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  walk(dirPath);
+  return results;
+}

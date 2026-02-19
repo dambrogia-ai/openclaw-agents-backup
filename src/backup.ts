@@ -8,7 +8,7 @@ import {
   ensureDirectoryExists,
   executeCommand,
   getCurrentTimestamp,
-  findJsonlFiles
+  findAllFiles
 } from './utils';
 import { listAgents, validateAgentBinding } from './agentLister';
 import { encryptFile } from './encryptionService';
@@ -104,21 +104,28 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
         ensureDirectoryExists(workspaceDestination);
         backupChange.workspaceChanged = rsyncDirectory(agent.workspace, workspaceDestination);
 
-        // Sync agent directory
+        // Sync agent directory (includes both agent/ and sessions/ directories)
+        // Source: ${agentDir}/.. to capture agent/ and sessions/ together
+        const agentDirParent = path.join(agent.agentDir, '..');
         const agentDirDestination = path.join(agentArchivePath, 'agentDir');
         ensureDirectoryExists(agentDirDestination);
-        backupChange.agentDirChanged = rsyncDirectory(agent.agentDir, agentDirDestination);
+        backupChange.agentDirChanged = rsyncDirectory(agentDirParent, agentDirDestination);
 
-        // Encrypt .jsonl session files in agentDir
-        const jsonlFiles = findJsonlFiles(agentDirDestination);
-        for (const jsonlFile of jsonlFiles) {
+        // Encrypt all files in agentDir backup
+        const allFiles = findAllFiles(agentDirDestination);
+        for (const file of allFiles) {
+          // Skip already encrypted files
+          if (file.endsWith('.enc')) {
+            continue;
+          }
+
           try {
-            const encryptedPath = `${jsonlFile}.enc`;
-            encryptFile(jsonlFile, encryptedPath, encryptionPassword);
+            const encryptedPath = `${file}.enc`;
+            encryptFile(file, encryptedPath, encryptionPassword);
             // Delete plaintext after successful encryption
-            fs.unlinkSync(jsonlFile);
+            fs.unlinkSync(file);
           } catch (error) {
-            backupChange.error = `Failed to encrypt ${jsonlFile}: ${error}`;
+            backupChange.error = `Failed to encrypt ${file}: ${error}`;
             throw error;
           }
         }

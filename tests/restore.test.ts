@@ -88,5 +88,80 @@ describe('Restore', () => {
       expect(result.success).toBe(true);
       expect(result.agentsRestored).toBe(1);
     });
+
+    it('should warn when auth-profiles.json exists in backup and confirmAuthOverwrite is false', async () => {
+      const archivesPath = path.join(testBackupRepo, 'archives');
+      const agentPath = path.join(archivesPath, 'test-agent');
+      const agentDirPath = path.join(agentPath, 'agentDir', 'agent');
+      const workspacePath = path.join(agentPath, 'workspace');
+
+      fs.mkdirSync(workspacePath, { recursive: true });
+      fs.mkdirSync(agentDirPath, { recursive: true });
+
+      // Create auth-profiles.json in the backup
+      fs.writeFileSync(path.join(agentDirPath, 'auth-profiles.json'), '{"key": "secret"}');
+
+      // Create minimal agent metadata
+      const metadata: AgentArchiveMetadata = {
+        id: 'test-agent',
+        identityName: 'test-identity',
+        identityEmoji: '⚙️',
+        identitySource: 'identity',
+        workspace: path.join(testRestorePath, 'workspace'),
+        agentDir: path.join(testRestorePath, 'agentDir'),
+        model: 'test-model',
+        bindings: 0,
+        isDefault: false,
+        routes: [],
+        backedUpAt: new Date().toISOString()
+      };
+
+      fs.writeFileSync(
+        path.join(agentPath, 'agent.json'),
+        JSON.stringify(metadata, null, 2)
+      );
+
+      const result = await performRestore(testBackupRepo, null, testRestorePath, false);
+      expect(result.success).toBe(false);
+      expect(result.authOverwriteWarning).toBe(true);
+      expect(result.message).toContain('auth-profiles.json');
+    });
+
+    it('should allow restore when auth-profiles.json exists and confirmAuthOverwrite is true', async () => {
+      const archivesPath = path.join(testBackupRepo, 'archives');
+      const agentPath = path.join(archivesPath, 'test-agent');
+      const agentDirPath = path.join(agentPath, 'agentDir', 'agent');
+      const workspacePath = path.join(agentPath, 'workspace');
+
+      fs.mkdirSync(workspacePath, { recursive: true });
+      fs.mkdirSync(agentDirPath, { recursive: true });
+
+      // Create auth-profiles.json in the backup
+      fs.writeFileSync(path.join(agentDirPath, 'auth-profiles.json'), '{"key": "secret"}');
+
+      // Create minimal agent metadata
+      const metadata: AgentArchiveMetadata = {
+        id: 'test-agent',
+        identityName: 'test-identity',
+        identityEmoji: '⚙️',
+        identitySource: 'identity',
+        workspace: path.join(testRestorePath, 'workspace'),
+        agentDir: path.join(testRestorePath, 'agentDir'),
+        model: 'test-model',
+        bindings: 0,
+        isDefault: false,
+        routes: [],
+        backedUpAt: new Date().toISOString()
+      };
+
+      fs.writeFileSync(
+        path.join(agentPath, 'agent.json'),
+        JSON.stringify(metadata, null, 2)
+      );
+
+      const result = await performRestore(testBackupRepo, null, testRestorePath, true);
+      expect(result.success).toBe(true);
+      expect(result.agentsRestored).toBe(1);
+    });
   });
 });

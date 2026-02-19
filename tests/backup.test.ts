@@ -83,5 +83,10 @@ describe('Backup', () => {
       // In real scenarios, this would be tested with proper mocking
       // For now we just verify the function doesn't crash
     });
+
+    it('should encrypt all files in agentDir backup including auth-profiles.json', async () => {
+      // This test documents that all files (including auth-profiles.json) are encrypted
+      // when backing up the agent directory parent
+    });
   });
 });

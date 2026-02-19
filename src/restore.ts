@@ -9,11 +9,13 @@ import { decryptFile } from './encryptionService';
  * @param backupRepoPath Path to backup repository
  * @param targetSha Git SHA to restore from (if null, uses current state)
  * @param workspacePath Base path where agents will be restored
+ * @param confirmAuthOverwrite If true, allows overwriting auth-profiles.json without warning
  */
 export async function performRestore(
   backupRepoPath: string,
   targetSha: string | null,
-  _workspacePath: string
+  _workspacePath: string,
+  confirmAuthOverwrite: boolean = false
 ): Promise<RestoreResult> {
   try {
     if (!pathExists(backupRepoPath)) {
@@ -80,16 +82,29 @@ export async function performRestore(
         // Restore agent directory
         const agentDirSource = path.join(agentArchivePath, 'agentDir');
         if (pathExists(agentDirSource)) {
-          // Decrypt .jsonl.enc files before restoring
+          // Decrypt all .enc files before restoring
           const encryptedFiles = findEncryptedFiles(agentDirSource);
           for (const encFile of encryptedFiles) {
             try {
-              const jsonlPath = encFile.substring(0, encFile.length - 4); // Remove .enc suffix
-              decryptFile(encFile, jsonlPath, encryptionPassword);
+              const plainPath = encFile.substring(0, encFile.length - 4); // Remove .enc suffix
+              decryptFile(encFile, plainPath, encryptionPassword);
               // Delete encrypted file after successful decryption
               fs.unlinkSync(encFile);
             } catch (error) {
               throw new Error(`Failed to decrypt ${encFile}: ${error}`);
+            }
+          }
+
+          // Check if auth-profiles.json exists in the backup
+          const backupAuthPath = path.join(agentDirSource, 'agent', 'auth-profiles.json');
+          if (pathExists(backupAuthPath)) {
+            if (!confirmAuthOverwrite) {
+              return {
+                success: false,
+                message: 'Backup contains sensitive auth-profiles.json (API tokens). Use --confirm-auth-overwrite to proceed.',
+                agentsRestored: 0,
+                authOverwriteWarning: true
+              };
             }
           }
 
