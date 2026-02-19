@@ -67,4 +67,5 @@ export interface RestoreResult {
   message: string;
   agentsRestored: number;
   error?: string;
+  authOverwriteWarning?: boolean;
 }

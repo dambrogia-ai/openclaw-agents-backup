@@ -83,6 +83,7 @@ async function handleRestore(
   args: string[]
 ): Promise<void> {
   let targetSha: string | null = null;
+  let confirmAuthOverwrite = false;
 
   // Check for --sha argument
   const shaIndex = args.indexOf('--sha');
@@ -93,15 +94,25 @@ async function handleRestore(
     console.log('🔄 Restoring to latest backup...');
   }
 
-  const result = await performRestore(backupRepoPath, targetSha, workspace);
+  // Check for --confirm-auth-overwrite flag
+  if (args.includes('--confirm-auth-overwrite')) {
+    confirmAuthOverwrite = true;
+  }
+
+  const result = await performRestore(backupRepoPath, targetSha, workspace, confirmAuthOverwrite);
 
   if (result.success) {
     console.log('✅ Restore complete');
     console.log(`   Agents restored: ${result.agentsRestored}`);
   } else {
-    console.error(`❌ Restore failed: ${result.message}`);
-    if (result.error) {
-      console.error(`   ${result.error}`);
+    if (result.authOverwriteWarning) {
+      console.warn(`⚠️  ${result.message}`);
+      console.warn(`\n   To restore including sensitive credentials, run:\n   backup-agents restore ${targetSha ? `--sha ${targetSha}` : ''} --confirm-auth-overwrite`);
+    } else {
+      console.error(`❌ Restore failed: ${result.message}`);
+      if (result.error) {
+        console.error(`   ${result.error}`);
+      }
     }
     process.exit(1);
   }
@@ -128,10 +139,14 @@ Usage:
   backup-agents [command] [options]
 
 Commands:
-  backup              Backup all agents now
-  restore [--sha SHA] Restore agents (optionally to specific commit)
-  history             Show recent backup history
-  --help, -h          Show this help message
+  backup                          Backup all agents now
+  restore [options]               Restore agents
+  history                         Show recent backup history
+  --help, -h                      Show this help message
+
+Restore Options:
+  --sha SHA                       Restore to specific commit
+  --confirm-auth-overwrite        Allow overwriting auth-profiles.json (API tokens)
 
 Examples:
   # Backup now
@@ -143,11 +158,15 @@ Examples:
   # Restore to specific point in time
   backup-agents restore --sha abc123def456
 
+  # Restore including sensitive credentials
+  backup-agents restore --confirm-auth-overwrite
+
   # View backup history
   backup-agents history
 
 Environment:
-  OPENCLAW_WORKSPACE   Path to OpenClaw workspace (default: /root/.openclaw/workspace)
+  OPENCLAW_WORKSPACE             Path to OpenClaw workspace (default: /root/.openclaw/workspace)
+  BACKUP_ENCRYPTION_PASSWORD     Password for encrypting/decrypting files (required)
 `);
 }
 

@@ -84,3 +84,87 @@ export function ensureDirectoryExists(dirPath: string): void {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 }
+
+/**
+ * Recursively find all .jsonl files in a directory
+ */
+export function findJsonlFiles(dirPath: string): string[] {
+  const results: string[] = [];
+
+  function walk(currentPath: string): void {
+    if (!fs.existsSync(currentPath)) {
+      return;
+    }
+
+    const items = fs.readdirSync(currentPath, { withFileTypes: true });
+
+    for (const item of items) {
+      const fullPath = path.join(currentPath, item.name);
+
+      if (item.isDirectory()) {
+        walk(fullPath);
+      } else if (item.isFile() && item.name.endsWith('.jsonl')) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  walk(dirPath);
+  return results;
+}
+
+/**
+ * Recursively find all .jsonl.enc files in a directory
+ */
+export function findEncryptedFiles(dirPath: string): string[] {
+  const results: string[] = [];
+
+  function walk(currentPath: string): void {
+    if (!fs.existsSync(currentPath)) {
+      return;
+    }
+
+    const items = fs.readdirSync(currentPath, { withFileTypes: true });
+
+    for (const item of items) {
+      const fullPath = path.join(currentPath, item.name);
+
+      if (item.isDirectory()) {
+        walk(fullPath);
+      } else if (item.isFile() && item.name.endsWith('.jsonl.enc')) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  walk(dirPath);
+  return results;
+}
+
+/**
+ * Recursively find all files in a directory (no filters)
+ */
+export function findAllFiles(dirPath: string): string[] {
+  const results: string[] = [];
+
+  function walk(currentPath: string): void {
+    if (!fs.existsSync(currentPath)) {
+      return;
+    }
+
+    const items = fs.readdirSync(currentPath, { withFileTypes: true });
+
+    for (const item of items) {
+      const fullPath = path.join(currentPath, item.name);
+
+      if (item.isDirectory()) {
+        walk(fullPath);
+      } else if (item.isFile()) {
+        results.push(fullPath);
+      }
+    }
+  }
+
+  walk(dirPath);
+  return results;
+}
