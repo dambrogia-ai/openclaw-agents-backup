@@ -5,6 +5,7 @@ import { performBackup } from '../src/backup';
 describe('Backup', () => {
   let testWorkspace: string;
   let testBackupRepo: string;
+  const originalEnv = process.env.BACKUP_ENCRYPTION_PASSWORD;
 
   beforeEach(() => {
     // Create temporary test directories
@@ -13,6 +14,9 @@ describe('Backup', () => {
 
     fs.mkdirSync(testWorkspace, { recursive: true });
     fs.mkdirSync(testBackupRepo, { recursive: true });
+
+    // Set encryption password for tests
+    process.env.BACKUP_ENCRYPTION_PASSWORD = 'test-password-12345';
 
     // Initialize git repo for backup
     const currentDir = process.cwd();
@@ -24,6 +28,15 @@ describe('Backup', () => {
       process.chdir(currentDir);
     } catch {
       process.chdir(currentDir);
+    }
+  });
+
+  afterAll(() => {
+    // Restore original env
+    if (originalEnv) {
+      process.env.BACKUP_ENCRYPTION_PASSWORD = originalEnv;
+    } else {
+      delete process.env.BACKUP_ENCRYPTION_PASSWORD;
     }
   });
 

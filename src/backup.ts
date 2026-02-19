@@ -7,9 +7,11 @@ import {
   writeJsonFile,
   ensureDirectoryExists,
   executeCommand,
-  getCurrentTimestamp
+  getCurrentTimestamp,
+  findJsonlFiles
 } from './utils';
 import { listAgents, validateAgentBinding } from './agentLister';
+import { encryptFile } from './encryptionService';
 
 /**
  * Perform backup of all agents to the configured backup repository
@@ -38,6 +40,18 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
         agentsProcessed: 0,
         changes: [],
         error: 'Backup repo not initialized'
+      };
+    }
+
+    // Get encryption password from environment
+    const encryptionPassword = process.env.BACKUP_ENCRYPTION_PASSWORD;
+    if (!encryptionPassword) {
+      return {
+        success: false,
+        message: 'Backup encryption password not set',
+        agentsProcessed: 0,
+        changes: [],
+        error: 'Missing BACKUP_ENCRYPTION_PASSWORD environment variable'
       };
     }
 
@@ -94,6 +108,20 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
         const agentDirDestination = path.join(agentArchivePath, 'agentDir');
         ensureDirectoryExists(agentDirDestination);
         backupChange.agentDirChanged = rsyncDirectory(agent.agentDir, agentDirDestination);
+
+        // Encrypt .jsonl session files in agentDir
+        const jsonlFiles = findJsonlFiles(agentDirDestination);
+        for (const jsonlFile of jsonlFiles) {
+          try {
+            const encryptedPath = `${jsonlFile}.enc`;
+            encryptFile(jsonlFile, encryptedPath, encryptionPassword);
+            // Delete plaintext after successful encryption
+            fs.unlinkSync(jsonlFile);
+          } catch (error) {
+            backupChange.error = `Failed to encrypt ${jsonlFile}: ${error}`;
+            throw error;
+          }
+        }
 
         changes.push(backupChange);
       } catch (error) {

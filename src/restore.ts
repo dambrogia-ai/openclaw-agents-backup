@@ -1,7 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { RestoreResult, AgentArchiveMetadata } from './types';
-import { pathExists, rsyncDirectory, readJsonFile, ensureDirectoryExists } from './utils';
+import { pathExists, rsyncDirectory, readJsonFile, ensureDirectoryExists, findEncryptedFiles } from './utils';
+import { decryptFile } from './encryptionService';
 
 /**
  * Restore agents from backup to specified git SHA or latest
@@ -31,6 +32,17 @@ export async function performRestore(
         message: 'Archives directory not found in backup repository',
         agentsRestored: 0,
         error: 'No archives found'
+      };
+    }
+
+    // Get encryption password from environment
+    const encryptionPassword = process.env.BACKUP_ENCRYPTION_PASSWORD;
+    if (!encryptionPassword) {
+      return {
+        success: false,
+        message: 'Backup encryption password not set',
+        agentsRestored: 0,
+        error: 'Missing BACKUP_ENCRYPTION_PASSWORD environment variable'
       };
     }
 
@@ -68,6 +80,19 @@ export async function performRestore(
         // Restore agent directory
         const agentDirSource = path.join(agentArchivePath, 'agentDir');
         if (pathExists(agentDirSource)) {
+          // Decrypt .jsonl.enc files before restoring
+          const encryptedFiles = findEncryptedFiles(agentDirSource);
+          for (const encFile of encryptedFiles) {
+            try {
+              const jsonlPath = encFile.substring(0, encFile.length - 4); // Remove .enc suffix
+              decryptFile(encFile, jsonlPath, encryptionPassword);
+              // Delete encrypted file after successful decryption
+              fs.unlinkSync(encFile);
+            } catch (error) {
+              throw new Error(`Failed to decrypt ${encFile}: ${error}`);
+            }
+          }
+
           ensureDirectoryExists(metadata.agentDir);
           rsyncDirectory(agentDirSource, metadata.agentDir);
         }

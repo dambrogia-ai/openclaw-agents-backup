@@ -6,6 +6,7 @@ import { AgentArchiveMetadata } from '../src/types';
 describe('Restore', () => {
   let testBackupRepo: string;
   let testRestorePath: string;
+  const originalEnv = process.env.BACKUP_ENCRYPTION_PASSWORD;
 
   beforeEach(() => {
     testBackupRepo = `/tmp/test-backup-restore-${Date.now()}`;
@@ -13,6 +14,18 @@ describe('Restore', () => {
 
     fs.mkdirSync(testBackupRepo, { recursive: true });
     fs.mkdirSync(testRestorePath, { recursive: true });
+
+    // Set encryption password for tests
+    process.env.BACKUP_ENCRYPTION_PASSWORD = 'test-password-12345';
+  });
+
+  afterAll(() => {
+    // Restore original env
+    if (originalEnv) {
+      process.env.BACKUP_ENCRYPTION_PASSWORD = originalEnv;
+    } else {
+      delete process.env.BACKUP_ENCRYPTION_PASSWORD;
+    }
   });
 
   afterEach(() => {
