@@ -168,7 +168,7 @@ export async function performBackup(workspacePath: string): Promise<BackupResult
 }
 
 /**
- * Commit backup changes to git repository
+ * Commit backup changes to git repository and push to remote
  */
 async function gitCommitBackup(repoPath: string): Promise<void> {
   const currentDir = process.cwd();
@@ -184,6 +184,9 @@ async function gitCommitBackup(repoPath: string): Promise<void> {
 
     // Commit changes
     executeCommand(`git commit -m "${commitMessage}"`);
+
+    // Push to remote origin
+    executeCommand('git push origin main');
   } finally {
     process.chdir(currentDir);
   }

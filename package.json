@@ -1,6 +1,6 @@
 {
   "name": "@dambrogia/openclaw-agents-backup",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backup and restore OpenClaw agent workspaces across multi-agent setups",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
