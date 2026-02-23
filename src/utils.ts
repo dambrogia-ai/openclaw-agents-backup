@@ -50,10 +50,10 @@ export function rsyncDirectory(source: string, destination: string): boolean {
   const normalizedSource = source.endsWith('/') ? source : `${source}/`;
 
   try {
-    // Perform actual sync with --archive --delete
-    // rsync is smart enough to only transfer changed files due to --archive
-    // Always return true as we've attempted the sync
-    executeCommand(`rsync --archive --delete "${normalizedSource}" "${destination}"`);
+    // Perform actual sync with --archive (no --delete)
+    // Backups are additive only - never delete from the archive
+    // Git tracks deletions in history when files are removed from source
+    executeCommand(`rsync --archive "${normalizedSource}" "${destination}"`);
     return true;
   } catch (error) {
     throw new Error(`Rsync failed for ${source} -> ${destination}: ${error}`);
