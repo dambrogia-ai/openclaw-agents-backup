@@ -43,25 +43,16 @@ export function writeJsonFile<T>(filePath: string, data: T): void {
  * Sync directory with rsync
  * @param source Source directory (must end with /)
  * @param destination Destination directory
- * @returns true if changes were made
+ * @returns true if sync was attempted
  */
 export function rsyncDirectory(source: string, destination: string): boolean {
   // Ensure source ends with / for rsync semantics (sync contents, not dir itself)
   const normalizedSource = source.endsWith('/') ? source : `${source}/`;
 
   try {
-    // rsync with --archive --delete
-    // --dry-run first to check if there are changes
-    const dryRunOutput = executeCommand(
-      `rsync --archive --delete --dry-run "${normalizedSource}" "${destination}" 2>&1 || true`
-    );
-
-    // If no changes, exit early
-    if (!dryRunOutput || dryRunOutput.trim() === '') {
-      return false;
-    }
-
-    // Perform actual sync
+    // Perform actual sync with --archive --delete
+    // rsync is smart enough to only transfer changed files due to --archive
+    // Always return true as we've attempted the sync
     executeCommand(`rsync --archive --delete "${normalizedSource}" "${destination}"`);
     return true;
   } catch (error) {
